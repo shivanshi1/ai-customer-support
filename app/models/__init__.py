@@ -3,7 +3,11 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+import json
+
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -15,6 +19,28 @@ def utc_now() -> datetime:
 
 class Base(DeclarativeBase):
     """Base class for all database models."""
+
+
+class PortableVector(TypeDecorator[list[float]]):
+    """Use pgvector in PostgreSQL and JSON text in local SQLite."""
+
+    impl = Text
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(Vector(384))
+        return dialect.type_descriptor(Text())
+
+    def process_bind_param(self, value, dialect):
+        if value is None or dialect.name == "postgresql":
+            return value
+        return json.dumps(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        return value if dialect.name == "postgresql" else json.loads(value)
 
 
 class Customer(Base):
@@ -123,3 +149,18 @@ class AuditEvent(Base):
     event_type: Mapped[str] = mapped_column(String(100))
     detail: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class KnowledgeChunk(Base):
+    """A searchable, versioned text chunk from an ingested knowledge source."""
+
+    __tablename__ = "knowledge_chunks"
+    __table_args__ = (UniqueConstraint("source", "chunk_index", name="uq_knowledge_source_chunk"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source: Mapped[str] = mapped_column(String(512), index=True)
+    title: Mapped[str] = mapped_column(String(255))
+    chunk_index: Mapped[int] = mapped_column(Integer)
+    content: Mapped[str] = mapped_column(Text)
+    embedding: Mapped[list[float]] = mapped_column(PortableVector())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)

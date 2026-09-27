@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from app.api.routes.chat import router as chat_router
 from app.api.routes.conversations import router as conversations_router
 from app.api.routes.health import router as health_router
+from app.api.routes.knowledge import router as knowledge_router
 from app.config import get_settings
 from app.core.errors import AppError, app_error_handler
 from app.core.logging import configure_logging
@@ -87,6 +88,7 @@ def create_app(settings_override=None) -> FastAPI:
     app.include_router(health_router, prefix="/api/v1")
     app.include_router(chat_router, prefix="/api/v1")
     app.include_router(conversations_router, prefix="/api/v1")
+    app.include_router(knowledge_router, prefix="/api/v1")
     return app
 
 

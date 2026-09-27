@@ -7,6 +7,7 @@ from app.config import Settings
 from app.repositories.support import SupportRepository
 from app.services.llm_service import LLMService
 from app.services.support_tools import SupportTools
+from app.services.knowledge_base import KnowledgeBase
 
 
 class SupportAgent:
@@ -17,10 +18,12 @@ class SupportAgent:
         llm_service: LLMService,
         repository: SupportRepository,
         settings: Settings,
+        knowledge_base: KnowledgeBase | None = None,
     ) -> None:
         self.llm_service = llm_service
         self.repository = repository
         self.settings = settings
+        self.knowledge_base = knowledge_base or KnowledgeBase(repository.session, settings)
         self.tools = SupportTools(repository)
 
     async def process_message(
@@ -38,6 +41,10 @@ class SupportAgent:
         )
         await self.repository.add_message(conversation.id, "customer", message)
 
+        retrieved = await self.knowledge_base.retrieve(message)
+        grounded_context = "\n".join(
+            f"[{source.title} | {source.source}] {source.excerpt}" for source, _ in retrieved
+        )
         decision = await self.llm_service.generate_support_decision(
             system_prompt=SUPPORT_SYSTEM_PROMPT,
             user_message=message,
@@ -45,8 +52,25 @@ class SupportAgent:
                 {"role": "assistant" if item.sender == "assistant" else "user", "content": item.content}
                 for item in history
             ],
+            grounded_context=grounded_context or None,
         )
         escalation = evaluate_escalation(message, decision)
+        knowledge_terms = (
+            "refund", "return", "shipping", "delivery", "warranty", "product",
+            "password", "account", "policy", "cancel", "exchange", "eligible",
+        )
+        needs_knowledge = decision.intent in {
+            "product_question", "password_reset", "refund_request", "billing_issue",
+            "general_inquiry",
+        } or any(term in message.casefold() for term in knowledge_terms)
+        if needs_knowledge and not retrieved:
+            escalation.reasons.append("insufficient_knowledge_evidence")
+            escalation = type(escalation)(True, escalation.reasons)
+            decision.response = (
+                "I could not find enough information in the available support documentation "
+                "to answer that reliably. Could you share a little more detail? I can also "
+                "connect you with a support specialist."
+            )
         outcome = await self.tools.execute_authorized_workflow(
             customer,
             conversation.id,
@@ -92,6 +116,7 @@ class SupportAgent:
             ),
             escalated=escalation.escalated,
             escalation_reasons=escalation.reasons,
+            sources=[source for source, _ in retrieved],
         )
 
     @staticmethod

@@ -16,6 +16,9 @@ safe support automation, knowledge retrieval, and human escalation.
   safety, threat, urgent, model-requested, and low-confidence cases.
 - Customer-scoped order-status lookup, idempotent human-review tickets, and
   return requests that remain pending approval until a human acts.
+- A Markdown/text/PDF knowledge base with persisted chunks, relevance-ranked
+  retrieval, grounded policy answers, and source citations in chat responses.
+- Protected knowledge reindex endpoint (`POST /api/v1/knowledge/reindex`).
 - Conversation-history endpoints for support review.
 - Shared application lifecycle for the database and LLM client.
 - Consistent provider-unavailable responses, request IDs, CORS, and logs.
@@ -33,6 +36,8 @@ safe support automation, knowledge retrieval, and human escalation.
 
 1. Install dependencies with `poetry install`.
 2. Copy `.env.example` to `.env` and provide `GROQ_API_KEY`.
+   Set `KNOWLEDGE_ADMIN_TOKEN` to a private token before using the reindex
+   endpoint. Sources live under `knowledge_base/` by default.
 3. Start the API:
 
    ```bash
@@ -49,6 +54,20 @@ poetry run alembic upgrade head
 
 The application also creates the local development schema at startup and seeds
 customer `C001` with order `ORD-1001` when that customer is absent.
+Apply `poetry run alembic upgrade head` to create the knowledge chunk table in
+databases managed through migrations. After editing knowledge documents, rebuild
+the index with:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/knowledge/reindex \
+  -H "Authorization: Bearer YOUR_KNOWLEDGE_ADMIN_TOKEN"
+```
+
+The retriever uses deterministic feature-hashed 384-dimension embeddings and
+cosine similarity without an external embedding API. PostgreSQL stores them in
+pgvector; SQLite stores the same values as JSON for local development. PDF
+ingestion uses `pypdf` text extraction; scanned image-only PDFs need OCR before
+ingestion.
 
 ## Example chat request
 
@@ -68,6 +87,7 @@ Pass the returned `conversation_id` in the next request to retain history.
 | `POST` | `/api/v1/chat` | Create or continue a support conversation |
 | `GET` | `/api/v1/conversations?customer_id=C001` | List a customer's conversations |
 | `GET` | `/api/v1/conversations/{id}?customer_id=C001` | Get a conversation transcript |
+| `POST` | `/api/v1/knowledge/reindex` | Reindex local knowledge files (Bearer token required) |
 
 ## Quality checks
 
@@ -76,8 +96,3 @@ poetry run ruff check .
 poetry run pytest -q
 ```
 
-## Next milestones
-
-See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the full roadmap. The
-next implementation phase adds structured intent classification, escalation
-rules, and controlled customer-support tools.

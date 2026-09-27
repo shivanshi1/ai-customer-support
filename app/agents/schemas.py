@@ -38,6 +38,15 @@ class ChatResponse(BaseModel):
     action_taken: str | None = None
     escalated: bool = False
     escalation_reasons: list[str] = Field(default_factory=list)
+    sources: list["KnowledgeSource"] = Field(default_factory=list)
+
+
+class KnowledgeSource(BaseModel):
+    """A source used to ground a customer answer."""
+
+    title: str
+    source: str
+    excerpt: str
 
 
 class SupportDecision(BaseModel):

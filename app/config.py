@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     groq_api_key: str | None = None
     groq_model: str = "openai/gpt-oss-20b"
     chat_history_limit: int = 12
+    knowledge_base_path: str = "knowledge_base"
+    knowledge_admin_token: str | None = None
+    rag_min_score: float = 0.12
 
     model_config = SettingsConfigDict(
         env_file=".env",
