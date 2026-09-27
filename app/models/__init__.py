@@ -5,7 +5,6 @@ from uuid import uuid4
 
 import json
 
-from pgvector.sqlalchemy import Vector
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -29,6 +28,10 @@ class PortableVector(TypeDecorator[list[float]]):
 
     def load_dialect_impl(self, dialect):
         if dialect.name == "postgresql":
+            try:
+                from pgvector.sqlalchemy import Vector
+            except ImportError:
+                return dialect.type_descriptor(Text())
             return dialect.type_descriptor(Vector(384))
         return dialect.type_descriptor(Text())
 
@@ -105,6 +108,7 @@ class SupportTicket(Base):
     status: Mapped[str] = mapped_column(String(32), default="open")
     priority: Mapped[str] = mapped_column(String(32), default="medium")
     summary: Mapped[str] = mapped_column(Text)
+    assignee: Mapped[str | None] = mapped_column(String(120), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 

@@ -88,3 +88,32 @@ class ConversationDetail(ConversationSummary):
     """A conversation and its persisted message history."""
 
     messages: list[MessageResponse]
+
+
+class TicketResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    customer_id: int
+    conversation_id: str | None
+    status: str
+    priority: str
+    summary: str
+    assignee: str | None = None
+    created_at: datetime
+
+
+class TicketUpdate(BaseModel):
+    status: Literal["open", "pending", "resolved"]
+    assignee: str | None = None
+    note: str | None = Field(default=None, max_length=1000)
+
+
+class DashboardMetrics(BaseModel):
+    conversations: int
+    messages: int
+    tickets: int
+    open_tickets: int
+    escalated_tickets: int
+    automation_rate: float
+    top_intents: dict[str, int]

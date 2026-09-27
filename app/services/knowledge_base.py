@@ -5,7 +5,7 @@ import math
 import re
 from pathlib import Path
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.schemas import KnowledgeSource
@@ -95,3 +95,6 @@ class KnowledgeBase:
             ), score)
             for row, score in scored[:limit]
         ]
+
+    async def has_index(self) -> bool:
+        return bool(await self.session.scalar(select(func.count(KnowledgeChunk.id))))

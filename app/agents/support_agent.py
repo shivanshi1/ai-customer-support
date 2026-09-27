@@ -63,7 +63,7 @@ class SupportAgent:
             "product_question", "password_reset", "refund_request", "billing_issue",
             "general_inquiry",
         } or any(term in message.casefold() for term in knowledge_terms)
-        if needs_knowledge and not retrieved:
+        if needs_knowledge and await self.knowledge_base.has_index() and not retrieved:
             escalation.reasons.append("insufficient_knowledge_evidence")
             escalation = type(escalation)(True, escalation.reasons)
             decision.response = (

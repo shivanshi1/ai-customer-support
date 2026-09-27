@@ -31,6 +31,9 @@ htmlcov/
 Thumbs.db.dual-graph/
 .dual-graph/
 
+dashboard/node_modules/
+dashboard/dist/
+
 .github/
 
 IMPLEMENTATION_PLAN.md

@@ -19,6 +19,8 @@ safe support automation, knowledge retrieval, and human escalation.
 - A Markdown/text/PDF knowledge base with persisted chunks, relevance-ranked
   retrieval, grounded policy answers, and source citations in chat responses.
 - Protected knowledge reindex endpoint (`POST /api/v1/knowledge/reindex`).
+- React operations dashboard with customer chat, conversation history, agent
+  decision/source cards, human review queue, and live support metrics.
 - Conversation-history endpoints for support review.
 - Shared application lifecycle for the database and LLM client.
 - Consistent provider-unavailable responses, request IDs, CORS, and logs.
@@ -45,6 +47,18 @@ safe support automation, knowledge retrieval, and human escalation.
    ```
 
 4. Open the generated API documentation at `http://127.0.0.1:8000/docs`.
+
+Start the Phase 6 dashboard in a second terminal:
+
+```bash
+cd dashboard
+npm install
+npm run dev
+```
+
+Open the Vite URL (normally `http://localhost:5173`). It connects to the API at
+`http://127.0.0.1:8000/api/v1`; set `VITE_API_URL` when the backend runs at a
+different address. The seeded demo customer is `C001`.
 
 For a fresh database managed through migrations, run:
 
@@ -88,6 +102,9 @@ Pass the returned `conversation_id` in the next request to retain history.
 | `GET` | `/api/v1/conversations?customer_id=C001` | List a customer's conversations |
 | `GET` | `/api/v1/conversations/{id}?customer_id=C001` | Get a conversation transcript |
 | `POST` | `/api/v1/knowledge/reindex` | Reindex local knowledge files (Bearer token required) |
+| `GET` | `/api/v1/dashboard/tickets` | List the human review queue |
+| `PATCH` | `/api/v1/dashboard/tickets/{id}` | Resolve or update a ticket |
+| `GET` | `/api/v1/dashboard/metrics` | Conversation, ticket, automation, and intent metrics |
 
 ## Quality checks
 
@@ -96,3 +113,11 @@ poetry run ruff check .
 poetry run pytest -q
 ```
 
+## Dashboard demo flow
+
+1. Ask “How do I reset my password?” in the chat panel and inspect the grounded
+   answer and account-guide source.
+2. Ask about `ORD-1001` to see customer-scoped order context.
+3. Ask for a refund or return and inspect the pending human-review state.
+4. Send an urgent complaint or fraud concern, then resolve its ticket from the
+   review queue.
