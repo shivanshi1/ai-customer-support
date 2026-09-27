@@ -1,0 +1,34 @@
+# Environment variables
+.env
+*.db
+*.sqlite
+
+# Virtual environments
+venv/
+.venv/
+venv-*/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Testing
+.pytest_cache/
+
+# Ruff
+.ruff_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db.dual-graph/
+.dual-graph/
+
+IMPLEMENTATION_PLAN.md
