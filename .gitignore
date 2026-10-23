@@ -33,6 +33,7 @@ Thumbs.db.dual-graph/
 
 dashboard/node_modules/
 dashboard/dist/
+.streamlit/secrets.toml
 
 .github/
 

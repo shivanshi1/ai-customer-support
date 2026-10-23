@@ -11,7 +11,9 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute("CREATE EXTENSION IF NOT EXISTS vector")
+    is_postgres = op.get_bind().dialect.name == "postgresql"
+    if is_postgres:
+        op.execute("CREATE EXTENSION IF NOT EXISTS vector")
     op.create_table(
         "knowledge_chunks",
         sa.Column("id", sa.Integer(), primary_key=True),
@@ -19,7 +21,7 @@ def upgrade() -> None:
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("chunk_index", sa.Integer(), nullable=False),
         sa.Column("content", sa.Text(), nullable=False),
-        sa.Column("embedding", Vector(384), nullable=False),
+        sa.Column("embedding", Vector(384) if is_postgres else sa.Text(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.UniqueConstraint("source", "chunk_index", name="uq_knowledge_source_chunk"),
     )

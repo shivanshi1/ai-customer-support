@@ -21,6 +21,8 @@ dependencies = [
     "asyncpg (>=0.29.0,<1.0.0)",
     "pypdf>=5.0.0,<7.0.0",
     "pgvector>=0.4.1,<1.0.0"
+    ,"streamlit>=1.40.0,<2.0.0"
+    ,"httpx>=0.28.0,<1.0.0"
 ]
 
 [dependency-groups]

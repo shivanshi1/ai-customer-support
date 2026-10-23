@@ -1,5 +1,12 @@
 # AI Customer Support Automation
 
+For complete Windows setup, run, dashboard, indexing, and testing instructions,
+see [HOWTO.md](HOWTO.md).
+
+The project includes both the original React dashboard and an optional
+Streamlit client. Start the latter with `poetry run streamlit run
+streamlit_app.py` after configuring `.streamlit/secrets.toml`.
+
 An AI-powered customer-support backend built with FastAPI and Groq. It stores
 customer conversations, maintains message history, and exposes a foundation for
 safe support automation, knowledge retrieval, and human escalation.
